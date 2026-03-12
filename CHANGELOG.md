@@ -1,5 +1,13 @@
 # kilo-code
 
+## 5.10.3
+
+### Patch Changes
+
+- [#47](https://github.com/Kilo-Org/kilocode-legacy/pull/47) [`65552ff`](https://github.com/Kilo-Org/kilocode-legacy/commit/65552ff1f501aaecc235882a299c4ae59f31a5a1) Thanks [@kevinvandijk](https://github.com/kevinvandijk)! - Add OpenAI's GPT-5.3-Chat-Latest model support (thanks Roo! / @PeterDaveHello)
+
+- [#47](https://github.com/Kilo-Org/kilocode-legacy/pull/47) [`65552ff`](https://github.com/Kilo-Org/kilocode-legacy/commit/65552ff1f501aaecc235882a299c4ae59f31a5a1) Thanks [@kevinvandijk](https://github.com/kevinvandijk)! - Add OpenAI's GPT-5.4 model support (thanks Roo! / @PeterDaveHello)
+
 ## 5.10.2
 
 ### Patch Changes
