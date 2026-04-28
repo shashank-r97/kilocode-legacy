@@ -1,5 +1,11 @@
 # kilo-code
 
+## 5.16.0
+
+### Minor Changes
+
+- [#135](https://github.com/Kilo-Org/kilocode-legacy/pull/135) [`c7da025`](https://github.com/Kilo-Org/kilocode-legacy/commit/c7da025b78c20e303149bba20021d69e80533710) Thanks [@kilo-code-bot](https://github.com/apps/kilo-code-bot)! - Add support for DeepSeek V4 Pro and DeepSeek V4 Flash models with 1M context window
+
 ## 5.15.0
 
 ### Minor Changes
