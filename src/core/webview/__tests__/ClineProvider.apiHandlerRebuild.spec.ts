@@ -21,6 +21,7 @@ vi.mock("fs/promises", () => ({
 vi.mock("../../../utils/storage", () => ({
 	getSettingsDirectoryPath: vi.fn().mockResolvedValue("/test/settings/path"),
 	getTaskDirectoryPath: vi.fn().mockResolvedValue("/test/task/path"),
+	getTaskHistoryFilePath: vi.fn().mockResolvedValue("/test/task_history.json"),
 	getGlobalStoragePath: vi.fn().mockResolvedValue("/test/storage/path"),
 }))
 

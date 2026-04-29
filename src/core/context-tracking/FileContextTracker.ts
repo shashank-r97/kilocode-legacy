@@ -7,7 +7,7 @@ import { fileExistsAtPath } from "../../utils/fs"
 import fs from "fs/promises"
 import { ContextProxy } from "../config/ContextProxy"
 import type { FileMetadataEntry, RecordSource, TaskMetadata } from "./FileContextTrackerTypes"
-import { ClineProvider } from "../webview/ClineProvider"
+import type { ClineProvider } from "../webview/ClineProvider"
 
 // This class is responsible for tracking file operations that may result in stale context.
 // If a user modifies a file outside of Roo, the context may become stale and need to be updated.

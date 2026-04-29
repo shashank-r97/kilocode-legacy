@@ -1,7 +1,8 @@
 // pnpm --filter @roo-code/vscode-webview test src/components/chat/__tests__/CommandExecution.spec.tsx
 
 import React from "react"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react"
+import { useEvent } from "react-use"
 
 import { CommandExecution } from "../CommandExecution"
 import { ExtensionStateContext } from "../../../context/ExtensionStateContext"
@@ -51,6 +52,39 @@ const ExtensionStateWrapper = ({ children }: { children: React.ReactNode }) => (
 describe("CommandExecution", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		vi.mocked(useEvent).mockImplementation(() => undefined)
+	})
+
+	it("uses the live started status command when message text only contains output", async () => {
+		let messageHandler: ((event: MessageEvent) => void) | undefined
+		vi.mocked(useEvent).mockImplementation((_name, handler) => {
+			messageHandler = handler as (event: MessageEvent) => void
+		})
+
+		render(
+			<ExtensionStateWrapper>
+				<CommandExecution executionId="test-1" text={"\nOutput:\nHello, World!"} />
+			</ExtensionStateWrapper>,
+		)
+
+		act(() => {
+			messageHandler?.({
+				data: {
+					type: "commandExecutionStatus",
+					text: JSON.stringify({
+						executionId: "test-1",
+						status: "started",
+						command: "echo Hello, World!",
+					}),
+				},
+			} as MessageEvent)
+		})
+
+		await waitFor(() => {
+			const codeBlocks = screen.getAllByTestId("code-block")
+			expect(codeBlocks[0]).toHaveTextContent("echo Hello, World!")
+			expect(codeBlocks[1]).toHaveTextContent("Hello, World!")
+		})
 	})
 
 	it("should render command without output", () => {

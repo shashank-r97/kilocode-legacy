@@ -5,7 +5,43 @@ import { constants as fsConstants } from "fs"
 import * as fsSync from "fs" // // kilocode_change
 
 import { Package } from "../shared/package"
+import { GlobalFileNames } from "../shared/globalFileNames"
 import { t } from "../i18n"
+import { getWorkspacePath } from "./path"
+
+const PROJECT_HISTORY_GITIGNORE = "*\n!.gitignore\n"
+const ensuredProjectHistoryGitignores = new Set<string>()
+
+function getConfiguredCustomStoragePath(): string {
+	try {
+		const config = vscode.workspace.getConfiguration(Package.name)
+		return config.get<string>("customStoragePath", "") ?? ""
+	} catch (error) {
+		console.warn("Could not access VSCode configuration - using default path")
+		return ""
+	}
+}
+
+async function ensureWritableDirectory(directoryPath: string): Promise<void> {
+	await fs.mkdir(directoryPath, { recursive: true })
+	await fs.access(directoryPath, fsConstants.R_OK | fsConstants.W_OK | fsConstants.X_OK)
+}
+
+async function ensureProjectHistoryGitignore(historyPath: string): Promise<void> {
+	if (ensuredProjectHistoryGitignores.has(historyPath)) {
+		return
+	}
+
+	const gitignorePath = path.join(historyPath, ".gitignore")
+	try {
+		await fs.writeFile(gitignorePath, PROJECT_HISTORY_GITIGNORE, { encoding: "utf8", flag: "wx" })
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
+			throw error
+		}
+	}
+	ensuredProjectHistoryGitignores.add(historyPath)
+}
 
 /**
  * Gets the base storage path for conversations
@@ -14,16 +50,7 @@ import { t } from "../i18n"
  */
 export async function getStorageBasePath(defaultPath: string): Promise<string> {
 	// Get user-configured custom storage path
-	let customStoragePath = ""
-
-	try {
-		// This is the line causing the error in tests
-		const config = vscode.workspace.getConfiguration(Package.name)
-		customStoragePath = config.get<string>("customStoragePath", "")
-	} catch (error) {
-		console.warn("Could not access VSCode configuration - using default path")
-		return defaultPath
-	}
+	const customStoragePath = getConfiguredCustomStoragePath()
 
 	// If no custom path is set, use default path
 	if (!customStoragePath) {
@@ -32,10 +59,7 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 
 	try {
 		// Ensure custom path exists
-		await fs.mkdir(customStoragePath, { recursive: true })
-
-		// Check directory write permission without creating temp files
-		await fs.access(customStoragePath, fsConstants.R_OK | fsConstants.W_OK | fsConstants.X_OK)
+		await ensureWritableDirectory(customStoragePath)
 
 		return customStoragePath
 	} catch (error) {
@@ -46,6 +70,59 @@ export async function getStorageBasePath(defaultPath: string): Promise<string> {
 		}
 		return defaultPath
 	}
+}
+
+/**
+ * Gets the base storage path for task history and conversation files.
+ * Order of precedence:
+ * 1. Explicit kilo-code.customStoragePath setting.
+ * 2. Current workspace's .kilocode/history directory.
+ * 3. VS Code extension global storage.
+ */
+export async function getTaskHistoryStorageBasePath(defaultPath: string): Promise<string> {
+	const customStoragePath = getConfiguredCustomStoragePath()
+
+	if (customStoragePath) {
+		try {
+			await ensureWritableDirectory(customStoragePath)
+			return customStoragePath
+		} catch (error) {
+			console.error(`Custom storage path is unusable: ${error instanceof Error ? error.message : String(error)}`)
+			if (vscode.window) {
+				vscode.window.showErrorMessage(
+					t("common:errors.custom_storage_path_unusable", { path: customStoragePath }),
+				)
+			}
+			return defaultPath
+		}
+	}
+
+	const workspacePath = getWorkspacePath()
+
+	if (!workspacePath) {
+		return defaultPath
+	}
+
+	const projectHistoryPath = path.join(workspacePath, ".kilocode", "history")
+
+	try {
+		await ensureWritableDirectory(projectHistoryPath)
+		await ensureProjectHistoryGitignore(projectHistoryPath)
+		return projectHistoryPath
+	} catch (error) {
+		console.error(
+			`Project history storage path is unusable: ${error instanceof Error ? error.message : String(error)}`,
+		)
+		return defaultPath
+	}
+}
+
+/**
+ * Gets the file path for the task history index.
+ */
+export async function getTaskHistoryFilePath(globalStoragePath: string): Promise<string> {
+	const basePath = await getTaskHistoryStorageBasePath(globalStoragePath)
+	return path.join(basePath, GlobalFileNames.taskHistory)
 }
 
 // kilocode_change - start
@@ -77,7 +154,7 @@ export function getStorageBasePathSync(defaultPath: string): string {
  * Gets the storage directory path for a task
  */
 export async function getTaskDirectoryPath(globalStoragePath: string, taskId: string): Promise<string> {
-	const basePath = await getStorageBasePath(globalStoragePath)
+	const basePath = await getTaskHistoryStorageBasePath(globalStoragePath)
 	const taskDir = path.join(basePath, "tasks", taskId)
 	await fs.mkdir(taskDir, { recursive: true })
 	return taskDir

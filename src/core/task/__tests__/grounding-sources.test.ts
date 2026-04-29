@@ -145,6 +145,9 @@ vi.mock("../../../utils/storage", () => ({
 	getTaskDirectoryPath: vi
 		.fn()
 		.mockImplementation((globalStoragePath, taskId) => Promise.resolve(`${globalStoragePath}/tasks/${taskId}`)),
+	getTaskHistoryFilePath: vi
+		.fn()
+		.mockImplementation((globalStoragePath) => Promise.resolve(`${globalStoragePath}/task_history.json`)),
 	getSettingsDirectoryPath: vi
 		.fn()
 		.mockImplementation((globalStoragePath) => Promise.resolve(`${globalStoragePath}/settings`)),

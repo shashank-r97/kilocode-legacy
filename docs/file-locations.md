@@ -4,7 +4,7 @@ Kilo Code stores configuration, data, and cache files in several locations depen
 
 ## VS Code Extension
 
-When running as a VS Code extension, Kilo Code uses VS Code's built-in `globalStorageUri` for data storage. The exact path depends on your OS and VS Code variant:
+When running as a VS Code extension, Kilo Code stores chat history in the current workspace by default, under `.kilocode/history/`. Other extension data still uses VS Code's built-in `globalStorageUri`. The exact global storage path depends on your OS and VS Code variant:
 
 | OS      | Base path                                                                   |
 | ------- | --------------------------------------------------------------------------- |
@@ -16,11 +16,29 @@ When running as a VS Code extension, Kilo Code uses VS Code's built-in `globalSt
 
 > **Remote contexts:** In remote sessions (Dev Containers, SSH, WSL), VS Code Server uses a different base path such as `~/.vscode-server/data/User/globalStorage/kilocode.kilo-code/`. The extension follows whatever path VS Code provides via `globalStorageUri`, so the paths above only apply to local desktop sessions.
 
-Within this directory:
+Within the workspace `.kilocode/history/` directory:
+
+| Path                | Description                                |
+| ------------------- | ------------------------------------------ |
+| `task_history.json` | Project-local task history index           |
+| `tasks/<id>/`       | Per-task conversation history and metadata |
+
+Within each `tasks/<id>/` directory:
+
+| Path                            | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `api_conversation_history.json` | API conversation history used when resuming task |
+| `ui_messages.json`              | UI chat messages displayed in the webview        |
+| `task_metadata.json`            | File context metadata for the task               |
+
+Kilo Code creates `.kilocode/history/.gitignore` automatically so local chat history is not committed by default.
+
+If no workspace is open, or if `.kilocode/history/` cannot be created or written, task history falls back to VS Code `globalStorageUri`. Existing global history is not migrated into project-local storage automatically.
+
+Within the global storage directory:
 
 | Path                         | Description                                |
 | ---------------------------- | ------------------------------------------ |
-| `tasks/<id>/`                | Per-task conversation history and metadata |
 | `settings/`                  | Global settings (custom modes, MCP config) |
 | `settings/custom_modes.yaml` | Global custom mode definitions             |
 | `settings/mcp_settings.json` | Global MCP server configuration            |
@@ -28,7 +46,7 @@ Within this directory:
 | `vector/`                    | Local vector store for code indexing       |
 | `puppeteer/`                 | Downloaded Chromium for browser tool       |
 
-You can override the storage base path via the `kilo-code.customStoragePath` VS Code setting.
+You can override the chat-history storage base path via the `kilo-code.customStoragePath` VS Code setting. When set, that path is used instead of `.kilocode/history/`.
 
 ## CLI / Agent Runtime
 

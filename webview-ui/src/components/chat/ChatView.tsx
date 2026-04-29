@@ -410,11 +410,19 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 							setSecondaryButtonText(t("chat:reject.title"))
 							break
 						case "command":
-							setSendingDisabled(isPartial)
-							setClineAsk("command")
-							setEnableButtons(!isPartial)
-							setPrimaryButtonText(t("chat:runCommand.title"))
-							setSecondaryButtonText(t("chat:reject.title"))
+							if (lastMessage.autoApproved) {
+								setSendingDisabled(true)
+								setClineAsk(undefined)
+								setEnableButtons(false)
+								setPrimaryButtonText(undefined)
+								setSecondaryButtonText(undefined)
+							} else {
+								setSendingDisabled(isPartial)
+								setClineAsk("command")
+								setEnableButtons(!isPartial)
+								setPrimaryButtonText(t("chat:runCommand.title"))
+								setSecondaryButtonText(t("chat:reject.title"))
+							}
 							break
 						case "command_output":
 							setSendingDisabled(false)
