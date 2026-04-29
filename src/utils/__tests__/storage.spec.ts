@@ -1,4 +1,5 @@
 import * as vscode from "vscode"
+import * as path from "path"
 
 vi.mock("fs/promises", async () => {
 	const mod = await import("../../__mocks__/fs/promises")
@@ -10,6 +11,8 @@ describe("getStorageBasePath - customStoragePath", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		;(vscode.workspace as any).workspaceFolders = []
+		;(vscode.window as any).activeTextEditor = null
 	})
 
 	afterEach(() => {
@@ -151,5 +154,86 @@ describe("getStorageBasePath - customStoragePath", () => {
 
 		expect(result).toBe(defaultPath)
 		expect(showErrorSpy).toHaveBeenCalledTimes(1)
+	})
+})
+
+describe("getTaskHistoryStorageBasePath", () => {
+	const defaultPath = "/test/global-storage"
+
+	beforeEach(() => {
+		vi.clearAllMocks()
+		;(vscode.workspace as any).workspaceFolders = []
+		;(vscode.window as any).activeTextEditor = null
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
+	it("uses the workspace .kilocode/history path when no custom storage path is configured", async () => {
+		const workspacePath = "/test/project"
+		;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: workspacePath } }]
+		vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
+			get: vi.fn().mockReturnValue(""),
+		} as any)
+
+		const fsPromises = await import("fs/promises")
+		const { getTaskHistoryStorageBasePath } = await import("../storage")
+		const expectedPath = path.join(workspacePath, ".kilocode", "history")
+
+		const result = await getTaskHistoryStorageBasePath(defaultPath)
+
+		expect(result).toBe(expectedPath)
+		expect((fsPromises as any).mkdir).toHaveBeenCalledWith(expectedPath, { recursive: true })
+		expect((fsPromises as any).writeFile).toHaveBeenCalledWith(
+			path.join(expectedPath, ".gitignore"),
+			"*\n!.gitignore\n",
+			{ encoding: "utf8", flag: "wx" },
+		)
+	})
+
+	it("uses customStoragePath instead of project-local history when configured", async () => {
+		const workspacePath = "/test/project"
+		const customPath = "/test/custom/history"
+		;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: workspacePath } }]
+		vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
+			get: vi.fn().mockReturnValue(customPath),
+		} as any)
+
+		const { getTaskHistoryStorageBasePath } = await import("../storage")
+
+		const result = await getTaskHistoryStorageBasePath(defaultPath)
+
+		expect(result).toBe(customPath)
+	})
+
+	it("falls back to global storage when no workspace is open", async () => {
+		vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
+			get: vi.fn().mockReturnValue(""),
+		} as any)
+
+		const { getTaskHistoryStorageBasePath } = await import("../storage")
+
+		const result = await getTaskHistoryStorageBasePath(defaultPath)
+
+		expect(result).toBe(defaultPath)
+	})
+
+	it("resolves task directories and the task history index under workspace history", async () => {
+		const workspacePath = "/test/project-files"
+		const taskId = "task-1"
+		;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: workspacePath } }]
+		vi.spyOn(vscode.workspace, "getConfiguration").mockReturnValue({
+			get: vi.fn().mockReturnValue(""),
+		} as any)
+
+		const { getTaskDirectoryPath, getTaskHistoryFilePath } = await import("../storage")
+
+		await expect(getTaskDirectoryPath(defaultPath, taskId)).resolves.toBe(
+			path.join(workspacePath, ".kilocode", "history", "tasks", taskId),
+		)
+		await expect(getTaskHistoryFilePath(defaultPath)).resolves.toBe(
+			path.join(workspacePath, ".kilocode", "history", "task_history.json"),
+		)
 	})
 })

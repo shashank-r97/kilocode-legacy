@@ -45,7 +45,9 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 	// to expanding the command execution output.
 	const [isExpanded, setIsExpanded] = useState(terminalShellIntegrationDisabled)
 	const [streamingOutput, setStreamingOutput] = useState("")
+	const [streamingCommand, setStreamingCommand] = useState("")
 	const [status, setStatus] = useState<CommandExecutionStatus | null>(null)
+	const displayCommand = command.trim().length > 0 ? command : streamingCommand
 
 	// The command's output can either come from the text associated with the
 	// task message (this is the case for completed commands) or from the
@@ -55,7 +57,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 	// Extract command patterns from the actual command that was executed
 	const commandPatterns = useMemo<CommandPattern[]>(() => {
 		// First get all individual commands (including subshell commands) using parseCommand
-		const allCommands = parseCommand(command)
+		const allCommands = parseCommand(displayCommand)
 
 		// Then extract patterns from each command using the existing pattern extraction logic
 		const allPatterns = new Set<string>()
@@ -76,7 +78,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 		return Array.from(allPatterns).map((pattern) => ({
 			pattern,
 		}))
-	}, [command])
+	}, [displayCommand])
 
 	// Handle pattern changes
 	const handleAllowPatternChange = (pattern: string) => {
@@ -123,6 +125,7 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 
 					switch (data.status) {
 						case "started":
+							setStreamingCommand(data.command)
 							setStatus(data)
 							break
 						case "output":
@@ -199,10 +202,10 @@ export const CommandExecution = ({ executionId, text, icon, title }: CommandExec
 
 			<div className="bg-vscode-editor-background border border-vscode-border rounded-xs ml-6 mt-2">
 				<div className="p-2">
-					<CodeBlock source={command} language="shell" />
+					<CodeBlock source={displayCommand} language="shell" />
 					<OutputContainer isExpanded={isExpanded} output={output} />
 				</div>
-				{command && command.trim() && (
+				{displayCommand && displayCommand.trim() && (
 					<CommandPatternSelector
 						patterns={commandPatterns}
 						allowedCommands={allowedCommands}
