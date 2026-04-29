@@ -3,6 +3,8 @@
 import Anthropic from "@anthropic-ai/sdk"
 import * as vscode from "vscode"
 import axios from "axios"
+import * as fs from "fs/promises"
+import * as path from "path"
 
 import {
 	type ProviderSettingsEntry,
@@ -33,12 +35,18 @@ vi.mock("p-wait-for", () => ({
 	default: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock("fs/promises", () => ({
+const fsPromisesMock = vi.hoisted(() => ({
 	mkdir: vi.fn().mockResolvedValue(undefined),
 	writeFile: vi.fn().mockResolvedValue(undefined),
 	readFile: vi.fn().mockResolvedValue(""),
+	access: vi.fn().mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" })),
 	unlink: vi.fn().mockResolvedValue(undefined),
 	rmdir: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock("fs/promises", () => ({
+	...fsPromisesMock,
+	default: fsPromisesMock,
 }))
 
 vi.mock("axios", () => ({
@@ -55,6 +63,7 @@ vi.mock("../../../utils/safeWriteJson")
 vi.mock("../../../utils/storage", () => ({
 	getSettingsDirectoryPath: vi.fn().mockResolvedValue("/test/settings/path"),
 	getTaskDirectoryPath: vi.fn().mockResolvedValue("/test/task/path"),
+	getTaskHistoryFilePath: vi.fn().mockResolvedValue("/test/task_history.json"),
 	getGlobalStoragePath: vi.fn().mockResolvedValue("/test/storage/path"),
 }))
 
@@ -402,6 +411,8 @@ describe("ClineProvider", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		vi.mocked(fs.access).mockRejectedValue(Object.assign(new Error("ENOENT"), { code: "ENOENT" }))
+		vi.mocked(fs.readFile).mockResolvedValue("")
 
 		if (!TelemetryService.hasInstance()) {
 			TelemetryService.createInstance([])
@@ -509,6 +520,106 @@ describe("ClineProvider", () => {
 		// @ts-ignore - accessing private property for testing
 		provider.view = mockWebviewView
 		expect(ClineProvider.getVisibleInstance()).toBe(provider)
+	})
+
+	test("updateTaskHistory persists task history through file-backed storage", async () => {
+		const historyItem = {
+			id: "task-1",
+			number: 1,
+			ts: 123,
+			task: "Test task",
+			tokensIn: 0,
+			tokensOut: 0,
+			cacheWrites: 0,
+			cacheReads: 0,
+			totalCost: 0,
+			size: 0,
+			workspace: "/test/workspace",
+		}
+
+		const history = await provider.updateTaskHistory(historyItem)
+
+		expect(history).toEqual([historyItem])
+		expect(provider.getTaskHistory()).toEqual([historyItem])
+		expect(safeWriteJson).toHaveBeenCalledWith("/test/task_history.json", [historyItem])
+		expect(mockContext.globalState.update).not.toHaveBeenCalledWith("taskHistory", expect.anything())
+	})
+
+	test("getTaskHistory lists file-backed task history without globalState taskHistory reads", async () => {
+		const historyItem = {
+			id: "task-1",
+			number: 1,
+			ts: 123,
+			task: "Test task",
+			tokensIn: 0,
+			tokensOut: 0,
+			cacheWrites: 0,
+			cacheReads: 0,
+			totalCost: 0,
+			size: 0,
+			workspace: "/test/workspace",
+		}
+
+		await provider.updateTaskHistory(historyItem)
+
+		expect(provider.getTaskHistory()).toEqual([historyItem])
+		expect(mockContext.globalState.get).not.toHaveBeenCalledWith("taskHistory")
+	})
+
+	test("getTaskWithId reopens a file-backed task using resolved task files", async () => {
+		const apiConversationHistory = [{ role: "user", content: "hello" }]
+		const historyItem = {
+			id: "task-1",
+			number: 1,
+			ts: 123,
+			task: "Test task",
+			tokensIn: 0,
+			tokensOut: 0,
+			cacheWrites: 0,
+			cacheReads: 0,
+			totalCost: 0,
+			size: 0,
+			workspace: "/test/workspace",
+		}
+
+		await provider.updateTaskHistory(historyItem)
+		vi.mocked(fs.access).mockResolvedValue(undefined)
+		vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify(apiConversationHistory))
+
+		const task = await provider.getTaskWithId("task-1")
+
+		expect(task).toMatchObject({
+			historyItem,
+			taskDirPath: "/test/task/path",
+			apiConversationHistoryFilePath: path.join("/test/task/path", "api_conversation_history.json"),
+			uiMessagesFilePath: path.join("/test/task/path", "ui_messages.json"),
+			apiConversationHistory,
+		})
+	})
+
+	test("deleteTaskFromState deletes from file-backed task history without globalState taskHistory writes", async () => {
+		const historyItem = {
+			id: "task-1",
+			number: 1,
+			ts: 123,
+			task: "Test task",
+			tokensIn: 0,
+			tokensOut: 0,
+			cacheWrites: 0,
+			cacheReads: 0,
+			totalCost: 0,
+			size: 0,
+			workspace: "/test/workspace",
+		}
+
+		await provider.updateTaskHistory(historyItem)
+		vi.clearAllMocks()
+
+		await provider.deleteTaskFromState("task-1")
+
+		expect(provider.getTaskHistory()).toEqual([])
+		expect(safeWriteJson).toHaveBeenCalledWith("/test/task_history.json", [])
+		expect(mockContext.globalState.update).not.toHaveBeenCalledWith("taskHistory", expect.anything())
 	})
 
 	test("resolveWebviewView sets up webview correctly", async () => {

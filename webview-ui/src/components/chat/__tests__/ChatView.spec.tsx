@@ -17,6 +17,7 @@ interface ClineMessage {
 	ts: number
 	text?: string
 	partial?: boolean
+	autoApproved?: boolean
 }
 
 interface ExtensionState {
@@ -523,6 +524,66 @@ describe("ChatView - Focus Grabbing Tests", () => {
 
 		// Should not grab focus for follow-up questions
 		expect(mockFocus).not.toHaveBeenCalled()
+	})
+})
+
+describe("ChatView - Auto-approved Commands", () => {
+	beforeEach(() => vi.clearAllMocks())
+
+	it("renders auto-approved command asks without manual Run or Reject controls", async () => {
+		const { queryByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "command",
+					ts: Date.now(),
+					text: "npm test",
+					autoApproved: true,
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(document.body.textContent).toContain('"autoApproved":true')
+		})
+
+		expect(queryByText("chat:runCommand.title")).not.toBeInTheDocument()
+		expect(queryByText("chat:reject.title")).not.toBeInTheDocument()
+	})
+
+	it("keeps manual controls for command asks that are not auto-approved", async () => {
+		const { queryByText } = renderChatView()
+
+		mockPostMessage({
+			clineMessages: [
+				{
+					type: "say",
+					say: "task",
+					ts: Date.now() - 2000,
+					text: "Initial task",
+				},
+				{
+					type: "ask",
+					ask: "command",
+					ts: Date.now(),
+					text: "npm test",
+				},
+			],
+		})
+
+		await waitFor(() => {
+			expect(queryByText("chat:runCommand.title")).toBeInTheDocument()
+		})
+
+		expect(queryByText("chat:reject.title")).toBeInTheDocument()
 	})
 })
 

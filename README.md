@@ -29,9 +29,21 @@
 - **Code Generation:** Kilo can generate code using natural language.
 - **Inline Autocomplete:** Get intelligent code completions as you type, powered by AI.
 - **Task Automation:** Kilo can automate repetitive coding tasks to save time..
+- **Project-Local Chat History:** This custom build stores new VS Code chat/task history inside the active workspace at `.kilocode/history/` by default, so each project keeps its own Kilo conversations.
+- **Visible Auto-Approved Commands:** Auto-approved terminal commands, including YOLO-mode commands allowed by `*`, render as normal command cards before they run and continue to show the command above the output.
 - **Automated Refactoring:** Kilo can refactor and improve existing code efficiently.
 - **MCP Server Marketplace**: Kilo can easily find, and use MCP servers to extend the agent capabilities.
 - **Multi Mode**: Plan with Architect, Code with Coder, and Debug with Debugger, and make your own custom modes.
+
+## Custom Build Changes
+
+This repository is based on Kilo Code v5.15.0 and includes local behavior changes intended to make the VS Code extension work more like a project-scoped coding agent:
+
+- **Workspace-local history by default:** New VS Code extension tasks are saved under `.kilocode/history/` in the current workspace instead of VS Code global storage. Task files keep the existing JSON formats: `task_history.json`, `tasks/<id>/api_conversation_history.json`, `tasks/<id>/ui_messages.json`, and `tasks/<id>/task_metadata.json`.
+- **Safe local history ignores:** Kilo creates `.kilocode/history/.gitignore` automatically so chat history is not committed by default. The root project `.gitignore` is not modified.
+- **Fallback and overrides preserved:** If no workspace is open, or if project-local history cannot be created, Kilo falls back to VS Code global storage. The existing `kilo-code.customStoragePath` setting still overrides the default history location.
+- **No automatic migration:** Existing global Kilo Code history is left untouched and is not copied into `.kilocode/history/`.
+- **Command visibility for auto-approval:** Auto-approved command asks are marked as auto-approved in the UI, manual Run/Reject buttons are hidden, and the command is kept visible above live output using the terminal execution status when needed.
 
 ## Get Started
 

@@ -302,6 +302,7 @@ export const clineMessageSchema = z.object({
 	isProtected: z.boolean().optional(),
 	apiProtocol: z.union([z.literal("openai"), z.literal("anthropic")]).optional(),
 	isAnswered: z.boolean().optional(),
+	autoApproved: z.boolean().optional(),
 	// kilocode_change start
 	metadata: z
 		.object({

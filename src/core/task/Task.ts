@@ -166,6 +166,7 @@ const MAX_EXPONENTIAL_BACKOFF_SECONDS = 600 // 10 minutes
 const DEFAULT_USAGE_COLLECTION_TIMEOUT_MS = 5000 // 5 seconds
 const FORCED_CONTEXT_REDUCTION_PERCENT = 75 // Keep 75% of context (remove 25%) on context window errors
 const MAX_CONTEXT_WINDOW_RETRIES = 3 // Maximum retries for context window errors
+const AUTO_APPROVED_COMMAND_VISIBILITY_DELAY_MS = 250
 // kilocode_change start
 const MAX_CHUTES_TERMINATED_RETRY_ATTEMPTS = 2 // Allow up to 2 retries (3 total attempts) before failing fast
 // kilocode_change end
@@ -1516,6 +1517,18 @@ export class Task extends EventEmitter<TaskEvents> implements TaskLike {
 		const approval = await checkAutoApproval({ state, ask: type, text, isProtected })
 
 		if (approval.decision === "approve") {
+			if (type === "command") {
+				const message = this.findMessageByTimestamp(askTs)
+
+				if (message) {
+					message.autoApproved = true
+					await this.saveClineMessages()
+					await this.updateClineMessage(message)
+				}
+
+				await delay(AUTO_APPROVED_COMMAND_VISIBILITY_DELAY_MS)
+			}
+
 			this.approveAsk()
 		} else if (approval.decision === "deny") {
 			this.denyAsk()

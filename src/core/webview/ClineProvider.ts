@@ -102,7 +102,13 @@ import { getSystemPromptFilePath } from "../prompts/sections/custom-system-promp
 
 import { webviewMessageHandler } from "./webviewMessageHandler"
 import type { ClineMessage, TodoItem } from "@roo-code/types"
-import { readApiMessages, saveApiMessages, saveTaskMessages } from "../task-persistence"
+import {
+	readApiMessages,
+	readTaskHistory,
+	saveApiMessages,
+	saveTaskHistory,
+	saveTaskMessages,
+} from "../task-persistence"
 import { readTaskMessages } from "../task-persistence/taskMessages"
 import { getNonce } from "./getNonce"
 import { getUri } from "./getUri"
@@ -172,6 +178,8 @@ export class ClineProvider
 	private deviceAuthHandler?: DeviceAuthHandler // kilocode_change - Device auth handler
 
 	private recentTasksCache?: string[]
+	private taskHistoryCache: HistoryItem[] = []
+	private taskHistoryLoadPromise?: Promise<void>
 	private pendingOperations: Map<string, PendingEditOperation> = new Map()
 	private static readonly PENDING_OPERATION_TIMEOUT_MS = 30000 // 30 seconds
 
@@ -194,6 +202,7 @@ export class ClineProvider
 	) {
 		super()
 		this.currentWorkspacePath = getWorkspacePath()
+		this.taskHistoryLoadPromise = this.loadTaskHistoryCache()
 
 		ClineProvider.activeInstances.add(this)
 
@@ -1425,6 +1434,7 @@ export class ClineProvider
 			task.emit(RooCodeEventName.TaskModeSwitched, task.taskId, newMode)
 
 			try {
+				await this.ensureTaskHistoryCacheLoaded()
 				// Update the task history with the new mode first.
 				const history = this.getGlobalState("taskHistory") ?? []
 				const taskHistoryItem = history.find((item) => item.id === task.taskId)
@@ -1665,6 +1675,7 @@ export class ClineProvider
 			// been persisted into taskHistory (it will be captured on the next save).
 			task.setTaskApiConfigName(apiConfigName)
 
+			await this.ensureTaskHistoryCacheLoaded()
 			const history = this.getGlobalState("taskHistory") ?? []
 			const taskHistoryItem = history.find((item) => item.id === task.taskId)
 
@@ -1892,6 +1903,34 @@ export class ClineProvider
 
 	// Task history
 
+	private async loadTaskHistoryCache(): Promise<void> {
+		try {
+			this.taskHistoryCache = await readTaskHistory({
+				globalStoragePath: this.contextProxy.globalStorageUri.fsPath,
+			})
+			this.recentTasksCache = undefined
+			this.kiloCodeTaskHistoryVersion++
+		} catch (error) {
+			this.log(`Failed to load task history: ${error instanceof Error ? error.message : String(error)}`)
+			this.taskHistoryCache = []
+			this.kiloCodeTaskHistoryVersion++
+		}
+	}
+
+	private async ensureTaskHistoryCacheLoaded(): Promise<void> {
+		if (this.taskHistoryLoadPromise) {
+			await this.taskHistoryLoadPromise
+		}
+	}
+
+	private async persistTaskHistory(history: HistoryItem[]): Promise<void> {
+		this.taskHistoryCache = history
+		await saveTaskHistory({
+			history,
+			globalStoragePath: this.contextProxy.globalStorageUri.fsPath,
+		})
+	}
+
 	async getTaskWithId(
 		id: string,
 		kilo_withMessage = true, // kilocode_change session manager uses this method in the background
@@ -1902,6 +1941,7 @@ export class ClineProvider
 		uiMessagesFilePath: string
 		apiConversationHistory: Anthropic.MessageParam[]
 	}> {
+		await this.ensureTaskHistoryCacheLoaded()
 		const history = this.getGlobalState("taskHistory") ?? []
 		const historyItem = history.find((item) => item.id === id)
 
@@ -2041,6 +2081,7 @@ export class ClineProvider
 	}
 
 	async deleteTaskFromState(id: string) {
+		await this.ensureTaskHistoryCacheLoaded()
 		const taskHistory = this.getGlobalState("taskHistory") ?? []
 		const updatedTaskHistory = taskHistory.filter((task) => task.id !== id)
 		await this.updateGlobalState("taskHistory", updatedTaskHistory)
@@ -2051,6 +2092,8 @@ export class ClineProvider
 
 	async refreshWorkspace() {
 		this.currentWorkspacePath = getWorkspacePath()
+		this.taskHistoryLoadPromise = this.loadTaskHistoryCache()
+		await this.taskHistoryLoadPromise
 
 		await kilo_execIfExtension(() => {
 			if (this.currentWorkspacePath) {
@@ -2598,6 +2641,7 @@ export class ClineProvider
 			// kilocode_change end
 		>
 	> {
+		await this.ensureTaskHistoryCacheLoaded()
 		const stateValues = this.contextProxy.getValues()
 		const customModes = await this.customModesManager.getCustomModes()
 
@@ -2880,6 +2924,7 @@ export class ClineProvider
 	}
 
 	async updateTaskHistory(item: HistoryItem): Promise<HistoryItem[]> {
+		await this.ensureTaskHistoryCacheLoaded()
 		const history = (this.getGlobalState("taskHistory") as HistoryItem[] | undefined) || []
 		const existingItemIndex = history.findIndex((h) => h.id === item.id)
 
@@ -2906,11 +2951,20 @@ export class ClineProvider
 
 	// @deprecated - Use `ContextProxy#setValue` instead.
 	private async updateGlobalState<K extends keyof GlobalState>(key: K, value: GlobalState[K]) {
+		if (key === "taskHistory") {
+			await this.persistTaskHistory(((value as HistoryItem[] | undefined) ?? []) as HistoryItem[])
+			return
+		}
+
 		await this.contextProxy.setValue(key, value)
 	}
 
 	// @deprecated - Use `ContextProxy#getValue` instead.
 	private getGlobalState<K extends keyof GlobalState>(key: K) {
+		if (key === "taskHistory") {
+			return this.taskHistoryCache as GlobalState[K]
+		}
+
 		return this.contextProxy.getValue(key)
 	}
 
@@ -3867,6 +3921,7 @@ Here is the project's README to help you get started:\n\n${mcpDetails.readmeCont
 	// kilocode_change start
 	// Add new methods for favorite functionality
 	async toggleTaskFavorite(id: string) {
+		await this.ensureTaskHistoryCacheLoaded()
 		const history = this.getGlobalState("taskHistory") ?? []
 		const updatedHistory = history.map((item) => {
 			if (item.id === id) {
@@ -3880,12 +3935,14 @@ Here is the project's README to help you get started:\n\n${mcpDetails.readmeCont
 	}
 
 	async getFavoriteTasks(): Promise<HistoryItem[]> {
+		await this.ensureTaskHistoryCacheLoaded()
 		const history = this.getGlobalState("taskHistory") ?? []
 		return history.filter((item) => item.isFavorited)
 	}
 
 	// Modify batch delete to respect favorites
 	async deleteMultipleTasks(taskIds: string[], excludeFavorites?: boolean) {
+		await this.ensureTaskHistoryCacheLoaded()
 		const history = this.getGlobalState("taskHistory") ?? []
 
 		// kilocode_change start
