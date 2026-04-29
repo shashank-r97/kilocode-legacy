@@ -12,6 +12,7 @@
 
 import * as vscode from "vscode"
 import { Package } from "../shared/package"
+import { setNodeTlsVerificationDisabled } from "./nodeTlsVerification"
 
 /**
  * Proxy configuration state
@@ -36,9 +37,6 @@ let outputChannel: vscode.OutputChannel | null = null
 
 let loggingEnabled = false
 let consoleLoggingEnabled = false
-
-let tlsVerificationOverridden = false
-let originalNodeTlsRejectUnauthorized: string | undefined
 
 function redactProxyUrl(proxyUrl: string | undefined): string {
 	if (!proxyUrl) {
@@ -70,18 +68,7 @@ function restoreGlobalFetchPatch(): void {
 }
 
 function restoreTlsVerificationOverride(): void {
-	if (!tlsVerificationOverridden) {
-		return
-	}
-
-	if (typeof originalNodeTlsRejectUnauthorized === "string") {
-		process.env.NODE_TLS_REJECT_UNAUTHORIZED = originalNodeTlsRejectUnauthorized
-	} else {
-		delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
-	}
-
-	tlsVerificationOverridden = false
-	originalNodeTlsRejectUnauthorized = undefined
+	setNodeTlsVerificationDisabled("debugProxy", false)
 }
 
 function applyTlsVerificationOverride(config: ProxyConfig): void {
@@ -96,13 +83,8 @@ function applyTlsVerificationOverride(config: ProxyConfig): void {
 		return
 	}
 
-	if (!tlsVerificationOverridden) {
-		originalNodeTlsRejectUnauthorized = process.env.NODE_TLS_REJECT_UNAUTHORIZED
-	}
-
 	// CodeQL: debug-only opt-in for MITM debugging.
-	process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0" // lgtm[js/disabling-certificate-validation]
-	tlsVerificationOverridden = true
+	setNodeTlsVerificationDisabled("debugProxy", true)
 }
 
 /**

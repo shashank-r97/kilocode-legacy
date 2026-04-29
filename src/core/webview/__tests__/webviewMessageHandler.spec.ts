@@ -66,6 +66,7 @@ import { t } from "../../../i18n"
 vi.mock("vscode", () => {
 	const showInformationMessage = vi.fn()
 	const showErrorMessage = vi.fn()
+	const showOpenDialog = vi.fn()
 	const openTextDocument = vi.fn().mockResolvedValue({})
 	const showTextDocument = vi.fn().mockResolvedValue(undefined)
 
@@ -73,12 +74,17 @@ vi.mock("vscode", () => {
 		window: {
 			showInformationMessage,
 			showErrorMessage,
+			showOpenDialog,
 			showTextDocument,
 			createTextEditorDecorationType: vi.fn(() => ({ dispose: vi.fn() })), // kilocode_change
 		},
 		workspace: {
 			workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }],
 			openTextDocument,
+		},
+		Uri: {
+			file: (fsPath: string) => ({ fsPath, path: fsPath, scheme: "file", toString: () => `file://${fsPath}` }),
+			parse: (value: string) => ({ fsPath: value, path: value, scheme: "file", toString: () => value }),
 		},
 	}
 })
@@ -143,6 +149,43 @@ vi.mock("../../mentions/resolveImageMentions", () => ({
 }))
 
 import { resolveImageMentions } from "../../mentions/resolveImageMentions"
+
+describe("webviewMessageHandler - selectSslCertificate", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("selects a custom CA certificate through VS Code's remote-safe file picker", async () => {
+		const certificateUri = {
+			fsPath: "C:\\certs\\custom-ca.pem",
+			path: "/C:/certs/custom-ca.pem",
+			toString: () => "file:///C:/certs/custom-ca.pem",
+		}
+
+		vi.mocked(vscode.window.showOpenDialog).mockResolvedValue([certificateUri] as any)
+
+		await webviewMessageHandler(mockClineProvider, {
+			type: "selectSslCertificate",
+			requestId: "ssl-cert-request-1",
+		})
+
+		expect(vscode.window.showOpenDialog).toHaveBeenCalledWith({
+			canSelectFiles: true,
+			canSelectFolders: false,
+			canSelectMany: false,
+			filters: {
+				"Certificate files": ["pem", "crt", "cer"],
+			},
+			title: "Select custom CA certificate",
+		})
+		expect(mockClineProvider.postMessageToWebview).toHaveBeenCalledWith({
+			type: "sslCertificateSelected",
+			requestId: "ssl-cert-request-1",
+			uri: "file:///C:/certs/custom-ca.pem",
+			displayPath: "C:\\certs\\custom-ca.pem",
+		})
+	})
+})
 
 describe("webviewMessageHandler - requestLmStudioModels", () => {
 	beforeEach(() => {

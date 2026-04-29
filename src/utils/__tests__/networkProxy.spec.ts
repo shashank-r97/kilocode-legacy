@@ -1,5 +1,6 @@
 import * as vscode from "vscode"
 import { initializeNetworkProxy, getProxyConfig, isProxyEnabled, isDebugMode } from "../networkProxy"
+import { restoreAllNodeTlsVerificationOverrides } from "../nodeTlsVerification"
 
 // Mock global-agent
 vi.mock("global-agent", () => ({
@@ -64,6 +65,7 @@ describe("networkProxy", () => {
 		vi.clearAllMocks()
 
 		// Reset environment variables
+		restoreAllNodeTlsVerificationOverrides()
 		delete process.env.GLOBAL_AGENT_HTTP_PROXY
 		delete process.env.GLOBAL_AGENT_HTTPS_PROXY
 		delete process.env.GLOBAL_AGENT_NO_PROXY

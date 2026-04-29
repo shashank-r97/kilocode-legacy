@@ -9,6 +9,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 import { useSelectedModel } from "@src/components/ui/hooks/useSelectedModel"
 
 import { inputEventTransform, noTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type AnthropicProps = {
 	apiConfiguration: ProviderSettings
@@ -117,6 +118,10 @@ export const Anthropic = ({ apiConfiguration, setApiConfigurationField }: Anthro
 				)}
 			</div>
 			{/* kilocode_change end */}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			{supports1MContextBeta && (
 				<div>
 					<Checkbox

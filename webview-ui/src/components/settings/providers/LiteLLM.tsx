@@ -17,6 +17,7 @@ import { Button } from "@src/components/ui"
 
 import { inputEventTransform } from "../transforms"
 import { ModelPicker } from "../ModelPicker"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type LiteLLMProps = {
 	apiConfiguration: ProviderSettings
@@ -117,6 +118,11 @@ export const LiteLLM = ({
 			<div className="text-sm text-vscode-descriptionForeground -mt-2">
 				{t("settings:providers.apiKeyStorageNotice")}
 			</div>
+
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 
 			<Button
 				variant="outline"

@@ -581,6 +581,9 @@ describe("ProviderSettingsManager", () => {
 			const newConfig: ProviderSettings = {
 				apiProvider: "anthropic",
 				apiKey: "test-key",
+				sslVerificationEnabled: false,
+				sslCertificateUri: "file:///certs/custom.pem",
+				sslCertificateDisplayPath: "/certs/custom.pem",
 			}
 			const newConfigWithExtra: ProviderSettings = {
 				...newConfig,

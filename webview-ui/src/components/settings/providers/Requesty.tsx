@@ -17,6 +17,7 @@ import { ModelPicker } from "../ModelPicker"
 import { RequestyBalanceDisplay } from "./RequestyBalanceDisplay"
 import { getCallbackUrl } from "@/oauth/urls"
 import { toRequestyServiceUrl } from "@roo/utils/requesty"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type RequestyProps = {
 	apiConfiguration: ProviderSettings
@@ -126,6 +127,10 @@ export const Requesty = ({
 					</div>
 				</VSCodeTextField>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<Button
 				variant="outline"
 				onClick={() => {

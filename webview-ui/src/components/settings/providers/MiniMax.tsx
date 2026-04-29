@@ -8,6 +8,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 
 import { inputEventTransform } from "../transforms"
 import { cn } from "@/lib/utils"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type MiniMaxProps = {
 	apiConfiguration: ProviderSettings
@@ -71,6 +72,10 @@ export const MiniMax = ({ apiConfiguration, setApiConfigurationField }: MiniMaxP
 					</VSCodeButtonLink>
 				)}
 			</div>
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 		</>
 	)
 }

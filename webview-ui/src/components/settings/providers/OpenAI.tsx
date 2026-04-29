@@ -9,6 +9,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, StandardTooltip } from "@src/components/ui"
 
 import { inputEventTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type OpenAIProps = {
 	apiConfiguration: ProviderSettings
@@ -75,6 +76,10 @@ export const OpenAI = ({ apiConfiguration, setApiConfigurationField, selectedMod
 					{t("settings:providers.getOpenAiApiKey")}
 				</VSCodeButtonLink>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 
 			{(() => {
 				const allowedTiers = (selectedModelInfo?.tiers?.map((t) => t.name).filter(Boolean) || []).filter(

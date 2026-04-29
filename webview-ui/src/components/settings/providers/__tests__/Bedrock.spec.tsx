@@ -50,6 +50,12 @@ vi.mock("@vscode/webview-ui-toolkit/react", () => ({
 	},
 	VSCodeRadio: () => <div>Radio</div>,
 	VSCodeRadioGroup: ({ children }: any) => <div>{children}</div>,
+	VSCodeDropdown: ({ children, value, onChange, "data-testid": dataTestId, className }: any) => (
+		<select value={value} onChange={onChange} data-testid={dataTestId} className={className}>
+			{children}
+		</select>
+	),
+	VSCodeOption: ({ children, value }: any) => <option value={value}>{children}</option>,
 }))
 
 // Mock the translation hook
@@ -61,6 +67,11 @@ vi.mock("@src/i18n/TranslationContext", () => ({
 
 // Mock the UI components
 vi.mock("@src/components/ui", () => ({
+	Button: ({ children, onClick, ...rest }: any) => (
+		<button onClick={onClick} {...rest}>
+			{children}
+		</button>
+	),
 	Select: ({ children, value, onValueChange }: any) => (
 		<select value={value} onChange={(e) => onValueChange && onValueChange(e.target.value)}>
 			{children}

@@ -140,6 +140,7 @@ export interface ExtensionMessage {
 		| "action"
 		| "state"
 		| "selectedImages"
+		| "sslCertificateSelected"
 		| "theme"
 		| "workspaceUpdated"
 		| "invoke"
@@ -353,6 +354,8 @@ export interface ExtensionMessage {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	values?: Record<string, any>
 	requestId?: string
+	uri?: string
+	displayPath?: string
 	promptText?: string
 	results?:
 		| { path: string; type: "file" | "folder"; label?: string }[]
@@ -732,6 +735,7 @@ export interface WebviewMessage {
 		| "clearTask"
 		| "didShowAnnouncement"
 		| "selectImages"
+		| "selectSslCertificate"
 		| "exportCurrentTask"
 		| "shareCurrentTask"
 		| "showTaskWithId"

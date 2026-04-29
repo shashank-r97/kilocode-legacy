@@ -5,6 +5,7 @@ import * as vscode from "vscode"
 import { GLOBAL_STATE_KEYS, SECRET_STATE_KEYS, GLOBAL_SECRET_KEYS } from "@roo-code/types"
 
 import { ContextProxy } from "../ContextProxy"
+import { restoreAllNodeTlsVerificationOverrides } from "../../../utils/nodeTlsVerification"
 
 vi.mock("vscode", () => ({
 	Uri: {
@@ -26,6 +27,8 @@ describe("ContextProxy", () => {
 	beforeEach(async () => {
 		// Reset mocks
 		vi.clearAllMocks()
+		restoreAllNodeTlsVerificationOverrides()
+		delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
 
 		// Mock globalState
 		mockGlobalState = {
@@ -55,6 +58,11 @@ describe("ContextProxy", () => {
 		// Create proxy instance
 		proxy = new ContextProxy(mockContext)
 		await proxy.initialize()
+	})
+
+	afterEach(() => {
+		restoreAllNodeTlsVerificationOverrides()
+		delete process.env.NODE_TLS_REJECT_UNAUTHORIZED
 	})
 
 	describe("read-only pass-through properties", () => {
@@ -378,6 +386,24 @@ describe("ContextProxy", () => {
 			// Verify the state cache has been cleared
 			expect(proxy.getGlobalState("apiModelId")).toBeUndefined()
 			expect(proxy.getGlobalState("openAiBaseUrl")).toBeUndefined()
+		})
+
+		it("should apply process-wide TLS verification state from active provider settings", async () => {
+			await proxy.setProviderSettings({
+				apiProvider: "openai",
+				openAiBaseUrl: "https://llm.local/v1",
+				sslVerificationEnabled: false,
+			})
+
+			expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBe("0")
+
+			await proxy.setProviderSettings({
+				apiProvider: "openai",
+				openAiBaseUrl: "https://llm.local/v1",
+				sslVerificationEnabled: true,
+			})
+
+			expect(process.env.NODE_TLS_REJECT_UNAUTHORIZED).toBeUndefined()
 		})
 	})
 

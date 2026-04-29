@@ -770,6 +770,27 @@ export const webviewMessageHandler = async (
 				messageTs: message.messageTs,
 			})
 			break
+		case "selectSslCertificate": {
+			const certificateUris = await vscode.window.showOpenDialog({
+				canSelectFiles: true,
+				canSelectFolders: false,
+				canSelectMany: false,
+				filters: {
+					"Certificate files": ["pem", "crt", "cer"],
+				},
+				title: "Select custom CA certificate",
+			})
+
+			const certificateUri = certificateUris?.[0]
+
+			await provider.postMessageToWebview({
+				type: "sslCertificateSelected",
+				requestId: message.requestId,
+				uri: certificateUri?.toString(),
+				displayPath: certificateUri?.fsPath || certificateUri?.path || certificateUri?.toString(),
+			})
+			break
+		}
 		case "exportCurrentTask":
 			const currentTaskId = provider.getCurrentTask()?.taskId
 			if (currentTaskId) {

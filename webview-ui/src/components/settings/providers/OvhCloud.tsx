@@ -9,6 +9,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 import { inputEventTransform } from "../transforms"
 import { ModelPicker } from "../ModelPicker"
 import { RouterModels } from "@roo/api"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type OvhCloudAiEndpointsProps = {
 	apiConfiguration: ProviderSettings
@@ -84,6 +85,11 @@ export const OvhCloudAiEndpoints = ({
 					</div>
 				</VSCodeTextField>
 			)}
+
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 
 			<ModelPicker
 				apiConfiguration={apiConfiguration}

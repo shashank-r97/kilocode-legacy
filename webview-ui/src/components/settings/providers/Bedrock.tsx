@@ -16,6 +16,7 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, StandardTooltip } from "@src/components/ui"
 
 import { inputEventTransform, noTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type BedrockProps = {
 	apiConfiguration: ProviderSettings
@@ -254,6 +255,10 @@ export const Bedrock = ({ apiConfiguration, setApiConfigurationField, selectedMo
 					</div>
 				</>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 		</>
 	)
 }

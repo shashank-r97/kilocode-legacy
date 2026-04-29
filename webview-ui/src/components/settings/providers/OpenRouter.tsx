@@ -17,6 +17,7 @@ import { inputEventTransform } from "../transforms"
 
 import { ModelPicker } from "../ModelPicker"
 import { OpenRouterBalanceDisplay } from "./OpenRouterBalanceDisplay"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type OpenRouterProps = {
 	apiConfiguration: ProviderSettings
@@ -103,6 +104,10 @@ export const OpenRouter = ({
 					)}
 				</div>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<ModelPicker
 				apiConfiguration={apiConfiguration}
 				setApiConfigurationField={setApiConfigurationField}

@@ -13,6 +13,7 @@ import { Button } from "@src/components/ui"
 
 import { inputEventTransform } from "../transforms"
 import { ModelPicker } from "../ModelPicker"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type InceptionProps = {
 	apiConfiguration: ProviderSettings
@@ -64,6 +65,11 @@ export const Inception = ({
 				className="w-full">
 				<label className="block font-medium mb-1">Base URL (optional)</label>
 			</VSCodeTextField>
+
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 
 			<Button
 				variant="outline"

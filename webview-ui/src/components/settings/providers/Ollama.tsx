@@ -9,6 +9,7 @@ import { useRouterModels } from "@src/components/ui/hooks/useRouterModels"
 import { vscode } from "@src/utils/vscode"
 
 import { inputEventTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type OllamaProps = {
 	apiConfiguration: ProviderSettings
@@ -99,6 +100,10 @@ export const Ollama = ({ apiConfiguration, setApiConfigurationField }: OllamaPro
 					</div>
 				</VSCodeTextField>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<VSCodeTextField
 				value={apiConfiguration?.ollamaModelId || ""}
 				onInput={handleInputChange("ollamaModelId")}

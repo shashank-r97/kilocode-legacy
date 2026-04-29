@@ -8,6 +8,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 
 import { inputEventTransform } from "../transforms"
 import { cn } from "@/lib/utils"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type MoonshotProps = {
 	apiConfiguration: ProviderSettings
@@ -76,6 +77,10 @@ export const Moonshot = ({ apiConfiguration, setApiConfigurationField }: Moonsho
 					</VSCodeButtonLink>
 				)}
 			</div>
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 		</>
 	)
 }

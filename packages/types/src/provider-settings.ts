@@ -212,6 +212,9 @@ const baseProviderSettingsSchema = z.object({
 	rateLimitSeconds: z.number().optional(),
 	rateLimitAfter: z.boolean().optional(), // kilocode_change
 	consecutiveMistakeLimit: z.number().min(0).optional(),
+	sslVerificationEnabled: z.boolean().optional(),
+	sslCertificateUri: z.string().optional(),
+	sslCertificateDisplayPath: z.string().optional(),
 
 	// Model reasoning.
 	enableReasoningEffort: z.boolean().optional(),
