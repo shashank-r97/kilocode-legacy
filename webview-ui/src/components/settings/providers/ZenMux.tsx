@@ -14,6 +14,7 @@ import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 import { inputEventTransform, noTransform } from "../transforms"
 
 import { ModelPicker } from "../ModelPicker"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type ZenMuxProps = {
 	apiConfiguration: ProviderSettings
@@ -106,6 +107,10 @@ export const ZenMux = ({
 					</Checkbox>
 				</>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<ModelPicker
 				apiConfiguration={apiConfiguration}
 				setApiConfigurationField={setApiConfigurationField}

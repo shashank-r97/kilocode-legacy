@@ -19,6 +19,12 @@ describe("GLOBAL_STATE_KEYS", () => {
 		expect(GLOBAL_STATE_KEYS).toContain("codebaseIndexOpenAiCompatibleBaseUrl")
 	})
 
+	it("should contain SSL verification setting", () => {
+		expect(GLOBAL_STATE_KEYS).toContain("sslVerificationEnabled")
+		expect(GLOBAL_STATE_KEYS).toContain("sslCertificateUri")
+		expect(GLOBAL_STATE_KEYS).toContain("sslCertificateDisplayPath")
+	})
+
 	it("should not contain OpenAI Compatible API key (secret)", () => {
 		expect(GLOBAL_STATE_KEYS).not.toContain("codebaseIndexOpenAiCompatibleApiKey")
 	})

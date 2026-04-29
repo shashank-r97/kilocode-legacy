@@ -20,6 +20,7 @@ import { customToolRegistry } from "@roo-code/core"
 import "./utils/path" // Necessary to have access to String.prototype.toPosix.
 import { createOutputChannelLogger, createDualLogger } from "./utils/outputChannelLogger"
 import { initializeNetworkProxy } from "./utils/networkProxy"
+import { applyActiveProfileSslVerification, restoreAllNodeTlsVerificationOverrides } from "./utils/nodeTlsVerification"
 
 import { Package } from "./shared/package"
 import { formatLanguage } from "./shared/language"
@@ -190,6 +191,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const contextProxy = await ContextProxy.getInstance(context)
+	await applyActiveProfileSslVerification(contextProxy.getProviderSettings())
+	context.subscriptions.push({ dispose: () => restoreAllNodeTlsVerificationOverrides() })
 
 	// Initialize code index managers for all workspace folders.
 	const codeIndexManagers: CodeIndexManager[] = []

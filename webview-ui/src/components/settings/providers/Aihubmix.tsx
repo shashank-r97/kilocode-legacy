@@ -12,6 +12,7 @@ import { inputEventTransform } from "../transforms"
 
 import { ModelPicker } from "../ModelPicker"
 import type { OrganizationAllowList } from "@roo-code/types"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type AihubmixProps = {
 	apiConfiguration: ProviderSettings
@@ -90,6 +91,10 @@ export const Aihubmix = ({
 				</div>
 			)}
 
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<ModelPicker
 				apiConfiguration={apiConfiguration}
 				setApiConfigurationField={setApiConfigurationField}

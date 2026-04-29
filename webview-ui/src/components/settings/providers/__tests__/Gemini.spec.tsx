@@ -21,6 +21,12 @@ vi.mock("@vscode/webview-ui-toolkit/react", () => ({
 			{children}
 		</a>
 	),
+	VSCodeDropdown: ({ children, value, onChange, "data-testid": dataTestId, className }: any) => (
+		<select value={value} onChange={onChange} data-testid={dataTestId} className={className}>
+			{children}
+		</select>
+	),
+	VSCodeOption: ({ children, value }: any) => <option value={value}>{children}</option>,
 	// kilocode_change end
 }))
 
@@ -40,6 +46,28 @@ vi.mock("@src/i18n/TranslationContext", () => ({
 vi.mock("@src/components/common/VSCodeButtonLink", () => ({
 	VSCodeButtonLink: ({ children, href }: any) => <a href={href}>{children}</a>,
 }))
+
+vi.mock("@src/components/ui", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@src/components/ui")>()
+
+	return {
+		...actual,
+		Button: ({ children, onClick, ...rest }: any) => (
+			<button onClick={onClick} {...rest}>
+				{children}
+			</button>
+		),
+		Select: ({ children, value, onValueChange }: any) => (
+			<select value={value} onChange={(e) => onValueChange?.(e.target.value)}>
+				{children}
+			</select>
+		),
+		SelectContent: ({ children }: any) => <>{children}</>,
+		SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
+		SelectTrigger: ({ children }: any) => <>{children}</>,
+		SelectValue: () => null,
+	}
+})
 
 // kilocode_change start
 vi.mock("../ModelPicker", () => ({

@@ -11,6 +11,7 @@ import { useRouterModels } from "@src/components/ui/hooks/useRouterModels"
 import { vscode } from "@src/utils/vscode"
 
 import { inputEventTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type LMStudioProps = {
 	apiConfiguration: ProviderSettings
@@ -108,6 +109,10 @@ export const LMStudio = ({ apiConfiguration, setApiConfigurationField }: LMStudi
 				className="w-full">
 				<label className="block font-medium mb-1">{t("settings:providers.lmStudio.baseUrl")}</label>
 			</VSCodeTextField>
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 			<VSCodeTextField
 				value={apiConfiguration?.lmStudioModelId || ""}
 				onInput={handleInputChange("lmStudioModelId")}

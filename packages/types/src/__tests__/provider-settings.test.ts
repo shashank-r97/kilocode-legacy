@@ -1,4 +1,4 @@
-import { getApiProtocol } from "../provider-settings.js"
+import { getApiProtocol, providerSettingsSchema } from "../provider-settings.js"
 
 describe("getApiProtocol", () => {
 	describe("Anthropic-style providers", () => {
@@ -82,5 +82,49 @@ describe("getApiProtocol", () => {
 			expect(getApiProtocol("vertex", "claude-3-opus")).toBe("anthropic")
 			expect(getApiProtocol("vertex", "ClAuDe-InStAnT")).toBe("anthropic")
 		})
+	})
+})
+
+describe("providerSettingsSchema", () => {
+	it("preserves explicit SSL verification selections", () => {
+		expect(
+			providerSettingsSchema.parse({
+				apiProvider: "openai",
+				openAiBaseUrl: "https://llm.local/v1",
+				sslVerificationEnabled: true,
+			}).sslVerificationEnabled,
+		).toBe(true)
+
+		expect(
+			providerSettingsSchema.parse({
+				apiProvider: "openai",
+				openAiBaseUrl: "https://llm.local/v1",
+				sslVerificationEnabled: false,
+			}).sslVerificationEnabled,
+		).toBe(false)
+	})
+
+	it("preserves custom SSL certificate selections", () => {
+		const parsed = providerSettingsSchema.parse({
+			apiProvider: "openai",
+			openAiBaseUrl: "https://llm.local/v1",
+			sslVerificationEnabled: true,
+			sslCertificateUri: "vscode-remote://ssh-remote+host/etc/ssl/custom.pem",
+			sslCertificateDisplayPath: "/etc/ssl/custom.pem",
+		})
+
+		expect(parsed.sslCertificateUri).toBe("vscode-remote://ssh-remote+host/etc/ssl/custom.pem")
+		expect(parsed.sslCertificateDisplayPath).toBe("/etc/ssl/custom.pem")
+	})
+
+	it("leaves missing SSL verification selections undefined so runtime defaults can apply", () => {
+		const parsed = providerSettingsSchema.parse({
+			apiProvider: "openai",
+			openAiBaseUrl: "https://llm.local/v1",
+		})
+
+		expect(parsed.sslVerificationEnabled).toBeUndefined()
+		expect(parsed.sslCertificateUri).toBeUndefined()
+		expect(parsed.sslCertificateDisplayPath).toBeUndefined()
 	})
 })

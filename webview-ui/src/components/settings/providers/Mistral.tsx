@@ -7,6 +7,7 @@ import { useAppTranslation } from "@src/i18n/TranslationContext"
 import { VSCodeButtonLink } from "@src/components/common/VSCodeButtonLink"
 
 import { inputEventTransform } from "../transforms"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 
 type MistralProps = {
 	apiConfiguration: ProviderSettings
@@ -63,6 +64,10 @@ export const Mistral = ({ apiConfiguration, setApiConfigurationField }: MistralP
 					</div>
 				</>
 			)}
+			<SslVerificationToggle
+				apiConfiguration={apiConfiguration}
+				setApiConfigurationField={setApiConfigurationField}
+			/>
 		</>
 	)
 }

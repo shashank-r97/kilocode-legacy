@@ -16,6 +16,7 @@ import { inputEventTransform } from "../transforms"
 import { geminiDefaultModelId } from "@roo-code/types"
 import type { RouterModels } from "@roo/api"
 import { ModelPicker } from "../ModelPicker"
+import { SslVerificationToggle } from "./SslVerificationToggle"
 // kilocode_change end
 
 type GeminiProps = {
@@ -99,6 +100,11 @@ export const Gemini = ({
 						className="w-full mt-1"
 					/>
 				)}
+
+				<SslVerificationToggle
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+				/>
 
 				{!simplifySettings && (
 					<>

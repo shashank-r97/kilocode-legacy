@@ -21,6 +21,7 @@ import {
 import { TelemetryService } from "@roo-code/telemetry"
 
 import { logger } from "../../utils/logging"
+import { applyActiveProfileSslVerification } from "../../utils/nodeTlsVerification"
 
 // kilocode_change start: Configuration change event types
 export interface ManagedIndexerConfig {
@@ -395,6 +396,8 @@ export class ContextProxy {
 				.reduce((acc, key) => ({ ...acc, [key]: undefined }), {} as ProviderSettings),
 			...values,
 		})
+
+		await applyActiveProfileSslVerification(values)
 
 		// kilocode_change start: Emit event if managed indexer config changed
 		const newToken = this.secretCache.kilocodeToken
